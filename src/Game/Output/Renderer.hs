@@ -6,12 +6,11 @@ import Linear.Affine (Point(..))
 
 import qualified SDL
 import qualified SDL.Raw.Types as SDL (Color(..))
-import qualified Graphics.UI.SDL.TTF as Font
+import qualified SDL.TTF as Font
 
 import Game.Util
 import Game.Output.Types
 import Game.Output.Shapes
-import Game.Output.Util
 
 
 fontDir :: String
@@ -33,7 +32,7 @@ render env@(GraphicsEnv (_, winY) _ renderer graphicImages) obj = case obj of
             Text txt fontSize -> do
                   font <- Font.openFont (fontDir ++ "Boxy-Bold.ttf") fontSize
                   textSize <- Font.sizeText font txt
-                  textSurface <- fmap unmanagedSurface $ Font.renderTextSolid font txt (SDL.Color 0 0x0D 0xBF 0)
+                  textSurface <- Font.renderTextSolid font txt (SDL.Color 0 0x0D 0xBF 0)
                   textTexture <- SDL.createTextureFromSurface renderer textSurface
                   SDL.copy renderer textTexture Nothing $ createRectangle $ reflect (pos, toupleF fromIntegral textSize)
                   SDL.destroyTexture textTexture

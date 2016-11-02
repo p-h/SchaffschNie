@@ -17,7 +17,7 @@ import Data.StateVar (($=))
 import Linear (V2(..), V4(..))
 
 import qualified SDL
-import qualified Graphics.UI.SDL.TTF as Font
+import qualified SDL.TTF as Font
 
 import Game.Util
 import Game.AppTypes
