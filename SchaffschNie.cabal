@@ -15,6 +15,24 @@ cabal-version:       >=1.22
 
 executable SchaffschNie
   main-is:             Main.hs
+  other-modules:       Game.AppTypes
+                       , Game.Core
+                       , Game.Input.Core
+                       , Game.Input.Events
+                       , Game.Input.Parser
+                       , Game.Level.Parser
+                       , Game.Level.Reader
+                       , Game.Output.Audio
+                       , Game.Output.Core
+                       , Game.Output.Renderer
+                       , Game.Output.Shapes
+                       , Game.Output.Types
+                       , Game.Process.Core
+                       , Game.Process.Event
+                       , Game.Process.Logic
+                       , Game.Process.Renderer
+                       , Game.Types
+                       , Game.Util
   other-extensions:    Arrows
   build-depends:       base >=4.6 && <5.0
                        , data-default >=0.5

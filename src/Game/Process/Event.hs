@@ -2,7 +2,6 @@
 module Game.Process.Event where
 
 import FRP.Yampa
-import FRP.Yampa.Event
 
 import Game.AppTypes
 import Game.Input.Events
