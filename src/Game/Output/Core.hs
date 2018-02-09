@@ -8,16 +8,17 @@ module Game.Output.Core
 
 import Prelude hiding (init)
 
+import Data.Default
 import Data.Map (Map, fromList, elems)
 import Control.Monad
 import Control.Concurrent
-import System.Process
 import Data.Text (pack)
 import Data.StateVar (($=))
 import Linear (V2(..), V4(..))
 
 import qualified SDL
 import qualified SDL.TTF as Font
+import qualified SDL.Mixer as Mix
 
 import Game.Util
 import Game.AppTypes
@@ -27,9 +28,9 @@ import qualified Game.Output.Renderer as Graphics
 import qualified Game.Output.Audio as Audio
 
 
-init :: GraphicWindowSize -> String -> IO GraphicsEnv
+init :: GraphicWindowSize -> String -> IO (GraphicsEnv, AudioEnv)
 init winSize@(winWidth, winHeight) title = do
-    SDL.initialize [SDL.InitVideo]
+    SDL.initialize [SDL.InitVideo, SDL.InitAudio]
     _ <- Font.init
 
     let windowConf = SDL.defaultWindow { SDL.windowInitialSize = V2 (fromIntegral winWidth) (fromIntegral winHeight) }
@@ -42,12 +43,16 @@ init winSize@(winWidth, winHeight) title = do
 
     graphicImages <- loadImages renderer
 
-    return $ GraphicsEnv winSize window renderer graphicImages
+    Mix.openAudio def $ 4096 * 2
+
+    -- TODO: Load others
+    music <- Mix.load "res/sounds/1.mp3"
+
+    return $ (GraphicsEnv winSize window renderer graphicImages, AudioEnv music)
 
     where
         loadImages :: SDL.Renderer -> IO (Map String GraphicImage)
-        loadImages renderer = do
-            loadImageDir "res/imgs/"
+        loadImages renderer = loadImageDir "res/imgs/"
             where
                 loadImageDir :: FilePath -> IO (Map String GraphicImage)
                 loadImageDir filePath = do
@@ -64,6 +69,7 @@ init winSize@(winWidth, winHeight) title = do
 
 quit :: GraphicsEnv -> IO ()
 quit (GraphicsEnv _ window renderer graphicImages) = do
+    Mix.closeAudio
     destroyImages $ elems graphicImages
     SDL.destroyRenderer renderer
     SDL.destroyWindow window
@@ -78,19 +84,19 @@ quit (GraphicsEnv _ window renderer graphicImages) = do
                     SDL.freeSurface imageSurface
 
 
-output :: (MVar Integer, MVar Integer, MVar ProcessHandle) -> GraphicsEnv -> AppOutput -> IO ()
-output (fpsCounter, fpsLastTicks, audioProcessVar) environment appOutput = do
+output :: (MVar Integer, MVar Integer) -> (GraphicsEnv, AudioEnv) -> AppOutput -> IO ()
+output (fpsCounter, fpsLastTicks) (graphicsEnv, audioEnv) appOutput = do
     -- grafic rendering
-    SDL.clear renderer >> Graphics.render environment obj >> SDL.present renderer >> measureFPS
+    SDL.clear renderer >> Graphics.render graphicsEnv obj >> SDL.present renderer >> measureFPS
 
     -- sound
     case outAudio appOutput of
-        Just sound -> Audio.playSound sound audioProcessVar
+        Just sound -> Audio.startMusic audioEnv
         _ -> return ()
 
     where
         obj = outRenderObject appOutput
-        renderer = gRenderer environment
+        renderer = gRenderer graphicsEnv
         measureFPS = do
             ticks <- SDL.ticks
             lastTicks <- readMVar fpsLastTicks

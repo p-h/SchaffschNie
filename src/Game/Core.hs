@@ -38,7 +38,7 @@ jumpSpeed = 25
 
 run :: IO ()
 run = do
-        graficsEnv <- Output.init windowSize windowTitle
+        (graficsEnv, audioEnv) <- Output.init windowSize windowTitle
 
         levels <- mapM Level.read [1, 2, 3]
         let gameSession = initGameSession initGamePlayer 1
@@ -46,14 +46,13 @@ run = do
 
         fpsCounter <- newMVar (0::Integer)
         fpsLastTicks <- newMVar (0::Integer)
-        audioProcessVar <- newEmptyMVar
 
         startYampa (Event <$> Input.input)
-                   (Output.output (fpsCounter, fpsLastTicks, audioProcessVar) graficsEnv)
+                   (Output.output (fpsCounter, fpsLastTicks) (graficsEnv, audioEnv))
                    Input.getTime
                    (Process.run (windowSize, renderScale) gameData)
 
-        Audio.stopSound audioProcessVar
+        Audio.stopMusic
 
         Output.quit graficsEnv
 

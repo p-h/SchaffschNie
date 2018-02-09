@@ -1,32 +1,15 @@
+{-# LANGUAGE GADTs #-}
 module Game.Output.Audio
-    ( playSound
-    , stopSound
+    ( startMusic
+    , stopMusic
     ) where
 
-import Control.Concurrent.MVar
-import System.Process
+import Game.Output.Types
 
+import qualified SDL.Mixer as Mix
 
-soundDir :: String
-soundDir = "res/sounds/"
+startMusic :: AudioEnv -> IO ()
+startMusic env@(AudioEnv music) = Mix.playMusic Mix.Forever music
 
-soundExtension :: String
-soundExtension = ".mp3"
-
-
-playSound :: Int -> MVar ProcessHandle -> IO ()
-playSound sound audioProcessVar = do
-    stopSound audioProcessVar
-
-    let file = soundDir ++ (show sound) ++ soundExtension
-    audioProcess <- spawnProcess "cvlc" ["-q", "--play-and-exit", file]
-    _ <- tryPutMVar audioProcessVar audioProcess
-    return ()
-
-stopSound :: MVar ProcessHandle -> IO ()
-stopSound audioProcessVar = do
-    maybeAudioProcess <- tryTakeMVar audioProcessVar
-    case maybeAudioProcess of
-        Just audioProcess -> do
-            terminateProcess audioProcess
-        _ -> return ()
+stopMusic :: IO ()
+stopMusic = Mix.haltMusic
